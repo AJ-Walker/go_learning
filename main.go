@@ -22,7 +22,12 @@ var userList = []User{
 }
 
 func getUsers(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, userList)
+	response := gin.H{
+		"status":  true,
+		"data":    userList,
+		"message": "User List fethced",
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 func addUser(c *gin.Context) {
@@ -51,12 +56,45 @@ func getUserByID(c *gin.Context) {
 
 }
 
+// updateUser
+func updateUserById(c *gin.Context) {
+	id := c.Param("id")
+
+	var userBody User
+	var userUpdatedData User
+	for i, user := range userList {
+		if user.ID == id {
+			if err := c.BindJSON(&userBody); err != nil {
+				c.IndentedJSON(http.StatusBadRequest, gin.H{
+					"status":  false,
+					"data":    nil,
+					"message": "Wrong user body",
+				})
+				return
+			}
+
+			userList[i].FirstName = userBody.FirstName
+			userList[i].LastName = userBody.LastName
+			userList[i].Email = userBody.Email
+
+			userUpdatedData = userList[i]
+
+		}
+	}
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"status":  true,
+		"data":    userUpdatedData,
+		"message": "User updated successful!",
+	})
+}
+
 func main() {
 
 	router := gin.Default()
 	router.GET("/users", getUsers)
 	router.POST("/users", addUser)
 	router.GET("/user/:id", getUserByID)
+	router.PUT("user/:id", updateUserById)
 
 	fmt.Printf("Starting server..")
 	router.Run("localhost:8080")
